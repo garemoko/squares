@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+</head>
+<body>
+</body>
+<script>
+	/*
+		CONSTANTS
+		To modify how quickly and often the solution is found, modify the thresholds bellow.
+		Allowed range is 0 to 1.
+		Higher thresholds make the problem harder.
+		To test, run the abilitiesTests function which will output success percentages to the console.
+	*/
+	const doubleCorrectThreshold = 0.8;
+	const letterCorrectThreshold = 0.5;
+	const maxAttempts = 6;
+	const correctRow = [2,2,2,2,2]; //TODO: calculate this from maxAttempts.
+	const spaces = 5;
+	//abilitiesTests();
+
+	// Do The Things.
+	var abilityLevel = 0;
+	var gameNumber = '[NUMBER]'; // TODO: make this a user input
+	var gameName = '[GAME]'; // TODO: make this a user input
+	var options = 5;
+
+	for (var i = options - 1; i >= 0; i--) {
+		var grid = calculate(abilityLevel);
+		outputHTML(grid);
+		document.body.appendChild (document.createElement('hr'));
+	}
+
+	// TESTS
+
+	function abilitiesTests(){
+		console.log('Ability 0: ' + calculateSuccessRateTest(0));
+		console.log('Ability 1: ' + calculateSuccessRateTest(1));
+		console.log('Ability 5: ' + calculateSuccessRateTest(5));
+		console.log('Ability 10: ' + calculateSuccessRateTest(10));
+		console.log('Ability -1: ' + calculateSuccessRateTest(-1));
+		console.log('Ability -5: ' + calculateSuccessRateTest(-5));
+		console.log('Ability -10: ' + calculateSuccessRateTest(-10));
+	}
+
+	function calculateSuccessRateTest(ability) {
+		const loops = 1000000;
+		var solvedCount = 0;
+		for (var i = loops - 1; i >= 0; i--) {
+			grid = calculate(ability);
+			if (arrayMatch(grid[grid.length-1],correctRow) == true) {
+				solvedCount++;
+			}
+		}
+		return (solvedCount / loops * 100) + '%';
+	}
+
+	// CALCULATE THE GRID
+
+	function calculate(ability) {
+		// 0 = incorrect | 1 = correct letter, wrong place | 2 = correct letter, right place
+		var grid = [];
+		grid[0] = emptyRow();
+
+		var activePartials = 0;
+
+		for (var row = 1; row <= maxAttempts; row++) {
+			grid[row] = [];
+			var correctCount = 0;
+			for (var col = 0; col < spaces; col++) {
+				grid[row][col] = calculateCell(row, col);
+				switch (grid[row][col]){
+					case 2:
+						correctCount++;
+						if (grid[row - 1][col] == 1) {
+							activePartials--;
+						}
+						break;
+					case 1:
+						activePartials++;
+						break;
+					default: 
+						break;
+				}
+			}
+			if (correctCount == spaces) {
+				return grid;
+			}
+		}
+		return grid;
+
+		function emptyRow() {
+			return [0,0,0,0,0];
+		}
+
+		function calculateCell(row, col) {
+			if (grid[row - 1][col] == 2) {
+				return 2;
+			}
+			score = Math.random() + (Math.random() * ability / 10) + (Math.random() * activePartials / maxAttempts);
+			if (score > doubleCorrectThreshold) {
+				return 2;
+			}
+			if (score > letterCorrectThreshold) {
+				return 1;
+			}
+			return 0;
+		}
+	}
+
+	// OUTPUT HTML
+	function outputHTML(grid) {
+
+		var scoreString = '';
+		if (arrayMatch(grid[grid.length-1],correctRow) == true) {
+			scoreString = (grid.length - 1) + "/" + maxAttempts;
+		} 
+		else {
+			scoreString = "X/" + maxAttempts;
+		}
+		var summaryHTML = document.createElement('p');
+		summaryHTML.innerHTML = gameName + ' ' + gameNumber + ' ' + scoreString;
+		document.body.appendChild (summaryHTML);
+
+		for (var rowI = 1; rowI < grid.length; rowI++) {
+			var rowHTML = outputRow(grid[rowI]);
+			document.body.appendChild (rowHTML);
+		}
+
+		function outputRow(row){
+			var emojis = [];
+			emojis[0] = String.fromCodePoint(0x2B1B);
+			emojis[1] = String.fromCodePoint(0x1F7E8);
+			emojis[2] = String.fromCodePoint(0x1F7E9);
+			var rowHTML = document.createElement('span');
+			var rowText = "";
+			for (var colI = 0; colI < row.length; colI++) {
+				rowText += emojis[row[colI]];
+			}
+			rowHTML.innerHTML = rowText;
+			rowHTML.appendChild (document.createElement('br'));
+			return rowHTML;
+		}
+	}
+
+
+	// UTILITIES
+	function arrayMatch(arrayOne, arrayTwo){
+		return (JSON.stringify(arrayOne) == JSON.stringify(arrayTwo));
+	}
+</script>
+</html>
